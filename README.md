@@ -43,6 +43,10 @@ The TV server listens on all interfaces on port 8080 and shows its LAN address o
 - Phone app: Settings → Language / Dil (Auto / Türkçe / English). Default is English.
 - Internal logs and comments remain Turkish by design.
 
+## Download
+
+Signed release APKs are attached to the [latest release](https://github.com/Lowell137/Remote/releases/latest): `Remote-Phone-release.apk` and `Remote-TV-release.apk`. If upgrading the phone app from a debug build, uninstall it first (the signing key changed).
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Internal project notes are in Turkish.

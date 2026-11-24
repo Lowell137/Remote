@@ -15,6 +15,20 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("lowell") {
+            storeFile = file("../../tv/tv.jks")
+            storePassword = "tvapk-local"
+            keyAlias = "tv"
+            keyPassword = "tvapk-local"
+        }
+    }
+
+    buildTypes {
+        debug { signingConfig = signingConfigs.getByName("lowell") }
+        release { signingConfig = signingConfigs.getByName("lowell"); isMinifyEnabled = false }
+    }
+
     buildFeatures { compose = true }
 
     compileOptions {
