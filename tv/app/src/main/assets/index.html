@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#faf8ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121318" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<title>TV Kumanda</title>
+<style>
+:root{
+  --primary:#3d5ba9;--on-primary:#fff;--primary-container:#dbe1ff;--on-primary-container:#00164e;
+  --secondary:#5a5f72;--secondary-container:#dce2f9;--on-secondary-container:#151b2c;
+  --tertiary-container:#ffd8ec;--on-tertiary-container:#31111d;
+  --surface:#faf8ff;--surface-low:#f4f3fa;--surface-container:#eeedf4;--surface-high:#e8e7ef;--surface-highest:#e3e2e9;
+  --on-surface:#1a1b20;--on-surface-variant:#44464f;--outline:#757780;--outline-variant:#c5c6d0;
+  --inverse-surface:#2f3036;--inverse-on-surface:#f1f0f7;--error:#ba1a1a;--ok:#2e7d52;
+  --r-xs:8px;--r-s:12px;--r-m:16px;--r-l:28px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --primary:#b4c5ff;--on-primary:#002a78;--primary-container:#264191;--on-primary-container:#dbe1ff;
+  --secondary:#c1c6dd;--secondary-container:#414659;--on-secondary-container:#dce2f9;
+  --tertiary-container:#5b2d44;--on-tertiary-container:#ffd8ec;
+  --surface:#121318;--surface-low:#1a1b20;--surface-container:#1e1f25;--surface-high:#292a2f;--surface-highest:#34343a;
+  --on-surface:#e3e2e9;--on-surface-variant:#c5c6d0;--outline:#8f909a;--outline-variant:#44464f;
+  --inverse-surface:#e3e2e9;--inverse-on-surface:#2f3036;--error:#ffb4ab;--ok:#7bd6a0;
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{margin:0;height:100%;background:var(--surface);color:var(--on-surface);overscroll-behavior:none;
+  font:400 16px/24px Roboto,"Google Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none}
+body{display:flex;flex-direction:column;height:100dvh;padding-top:env(safe-area-inset-top)}
+svg.i{width:24px;height:24px;fill:currentColor;flex:none;pointer-events:none}
+.appbar{display:flex;align-items:center;height:56px;padding:0 8px 0 16px;gap:8px;flex:none}
+.appbar h1{flex:1;margin:0;font:400 20px/28px inherit;font-family:inherit}
+.chip-st{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:var(--r-s);
+  border:1px solid var(--outline-variant);font:500 12px/16px inherit;font-family:inherit;color:var(--on-surface-variant)}
+.chip-st i{width:8px;height:8px;border-radius:50%;background:var(--outline)}
+.chip-st.ok i{background:var(--ok)}.chip-st.bad i{background:var(--error)}
+.ibtn{width:48px;height:48px;border:0;border-radius:50%;background:none;color:var(--on-surface-variant);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+main{flex:1;min-height:0;position:relative}
+.tab{display:none;position:absolute;inset:0;padding:4px 16px 12px;flex-direction:column;gap:12px;overflow:auto}
+.tab.on{display:flex}
+nav{display:flex;flex:none;background:var(--surface-container);padding:12px 8px 16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));height:calc(80px + env(safe-area-inset-bottom))}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;color:var(--on-surface-variant);font:500 12px/16px inherit;font-family:inherit;cursor:pointer;padding:0}
+nav .pill{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+nav button.on{color:var(--on-surface)}
+nav button.on .pill{background:var(--secondary-container);color:var(--on-secondary-container)}
+.sl{position:relative;overflow:hidden}
+.sl::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .12s;border-radius:inherit;pointer-events:none}
+.sl:active::after,.sl.hold::after{opacity:.16}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 24px;border:0;border-radius:24px;font:500 14px/20px inherit;font-family:inherit;cursor:pointer}
+.btn.filled{background:var(--primary);color:var(--on-primary)}
+.btn.tonal{background:var(--secondary-container);color:var(--on-secondary-container)}
+.btn.text{background:none;color:var(--primary);padding:0 12px}
+.btn.hold.tonal{background:var(--primary);color:var(--on-primary)}
+.row{display:flex;gap:12px}.row>*{flex:1}
+
+/* mod seçici (segmented button) */
+.seg{display:flex;border:1px solid var(--outline);border-radius:20px;overflow:hidden;flex:none}
+.seg button{flex:1;height:40px;border:0;border-right:1px solid var(--outline);background:none;color:var(--on-surface);font:500 14px/20px inherit;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--secondary-container);color:var(--on-secondary-container)}
+.seg button.on::before{content:"✓";font-size:14px}
+
+/* touchpad + ses çubuğu */
+.stage{flex:1;min-height:180px;display:flex;gap:12px}
+#pad{flex:1;border-radius:var(--r-l);background:var(--surface-high);color:var(--on-surface-variant);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;touch-action:none;font:400 14px/20px inherit;font-family:inherit;transition:background .15s;position:relative}
+#pad.aim{background:var(--primary-container);color:var(--on-primary-container)}
+#pad svg.i{width:44px;height:44px;opacity:.65}
+#pad .big{font:500 16px/24px inherit;font-family:inherit;color:var(--on-surface)}
+#pad.aim .big{color:var(--on-primary-container)}
+#dot{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--primary);opacity:0;pointer-events:none;transform:translate(-50%,-50%);transition:opacity .25s}
+.vol{width:64px;display:flex;flex-direction:column;gap:8px;background:var(--surface-container);border-radius:32px;padding:8px}
+.vol button{flex:1;border:0;border-radius:24px;background:var(--surface-high);color:var(--on-surface);display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:48px}
+.vol button.hold{background:var(--primary-container);color:var(--on-primary-container)}
+.bar{display:flex;gap:8px;flex:none}
+.bar button{flex:1;height:56px;border:0;border-radius:var(--r-m);background:var(--secondary-container);color:var(--on-secondary-container);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.bar button.hold{background:var(--primary);color:var(--on-primary)}
+#clicks{display:none}
+body[data-mode="mouse"] #clicks,body[data-mode="laser"] #clicks{display:flex}
+#bc{display:none}body[data-mode="laser"] #bc{display:inline-flex}
+#dpadBox{display:none;flex:1;border-radius:var(--r-l);background:var(--surface-high);padding:12px;grid-template:repeat(3,1fr)/repeat(3,1fr);gap:8px}
+body[data-mode="dpad"] #dpadBox{display:grid}
+body[data-mode="dpad"] #pad{display:none}
+#dpadBox button{border:0;border-radius:22px;background:var(--surface-container);color:var(--on-surface);display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:56px}
+#dpadBox button svg.i{width:36px;height:36px}
+#dpadBox button.hold{background:var(--primary-container);color:var(--on-primary-container)}
+#dpadBox .ok{background:var(--primary);color:var(--on-primary);font:500 20px/24px inherit;font-family:inherit;border-radius:50%}
+#dpadBox .ok.hold{background:var(--primary-container);color:var(--on-primary-container)}
+#dpadBox .u{grid-area:1/2}#dpadBox .l{grid-area:2/1}#dpadBox .ok{grid-area:2/2}#dpadBox .r{grid-area:2/3}#dpadBox .d{grid-area:3/2}
+
+/* uygulamalar */
+#apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;align-content:start}
+.app{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;border:0;border-radius:var(--r-m);background:var(--surface-container);color:var(--on-surface);font:500 12px/16px inherit;font-family:inherit;cursor:pointer;text-align:center;word-break:break-word}
+.app b{width:48px;height:48px;border-radius:50%;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;justify-content:center;font:500 20px/24px inherit;font-family:inherit}
+.empty{color:var(--on-surface-variant);text-align:center;padding:32px 16px}
+
+/* klavye */
+.field{position:relative;margin-top:8px;-webkit-user-select:text;user-select:text}
+.field textarea{width:100%;min-height:128px;resize:none;border-radius:var(--r-xs);border:1px solid var(--outline);background:transparent;color:var(--on-surface);font:400 16px/24px inherit;font-family:inherit;padding:16px;outline:none}
+.field textarea:focus{border:2px solid var(--primary);padding:15px}
+.field label{position:absolute;left:12px;top:-10px;padding:0 4px;background:var(--surface);color:var(--on-surface-variant);font:400 12px/16px inherit;font-family:inherit}
+.field textarea:focus+label{color:var(--primary)}
+.segs{display:flex;background:var(--surface-container);border-radius:var(--r-l);padding:6px;gap:6px}
+.segs button{flex:1;height:56px;border:0;border-radius:22px;background:var(--surface-high);color:var(--on-surface);font:500 14px/20px inherit;font-family:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.segs button.hold{background:var(--primary-container);color:var(--on-primary-container)}
+.hint{color:var(--on-surface-variant);font:400 12px/16px inherit;font-family:inherit}
+
+/* ayar penceresi */
+dialog{border:0;border-radius:28px;background:var(--surface-high);color:var(--on-surface);padding:24px;width:min(360px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h2{margin:0 0 16px;font:400 24px/32px inherit;font-family:inherit}
+.set{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;color:var(--on-surface-variant);font:500 14px/20px inherit;font-family:inherit}
+.set span{display:flex;justify-content:space-between}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:40px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:16px;border-radius:8px;background:linear-gradient(90deg,var(--primary) var(--v,33%),var(--secondary-container) var(--v,33%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:4px;height:44px;margin-top:-14px;border-radius:2px;background:var(--primary);border:0}
+input[type=range]::-moz-range-track{height:16px;border-radius:8px;background:var(--secondary-container)}
+input[type=range]::-moz-range-progress{height:16px;border-radius:8px;background:var(--primary)}
+input[type=range]::-moz-range-thumb{width:4px;height:44px;border-radius:2px;background:var(--primary);border:0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+.fchip{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:var(--r-s);border:1px solid var(--outline);color:var(--on-surface-variant);font:500 14px/20px inherit;font-family:inherit;cursor:pointer}
+.fchip input{display:none}
+.fchip:has(input:checked){background:var(--secondary-container);color:var(--on-secondary-container);border-color:transparent}
+.fchip:has(input:checked)::before{content:"✓";font-size:14px}
+dialog .act{display:flex;justify-content:flex-end;margin-top:16px}
+.sec{font:500 14px/20px inherit;font-family:inherit;color:var(--primary);margin:10px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px;border:0;border-radius:var(--r-m);background:var(--surface-container);color:var(--on-surface);font:500 12px/16px inherit;font-family:inherit;cursor:pointer;text-align:center}
+.tile svg.i{width:28px;height:28px;color:var(--primary)}
+.dlist{display:flex;flex-direction:column;gap:8px}
+.lrow{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-m);background:var(--surface-container);border:0;color:var(--on-surface);font:500 15px/20px inherit;font-family:inherit;width:100%;text-align:left;cursor:pointer}
+.lrow.cur{background:var(--secondary-container);color:var(--on-secondary-container)}
+.lrow small{margin-left:auto;font-size:12px;opacity:.85}
+.dlist .btn{width:100%;justify-content:flex-start}
+.btn.danger{background:var(--error);color:#fff}
+dialog p{margin:0 0 8px;color:var(--on-surface-variant);font:400 14px/20px inherit;font-family:inherit}
+#snack{position:fixed;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));max-width:480px;margin:0 auto;padding:14px 16px;border-radius:var(--r-xs);background:var(--inverse-surface);color:var(--inverse-on-surface);font:400 14px/20px inherit;font-family:inherit;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}
+#snack.show{opacity:1;transform:none}
+</style>
+</head>
+<body data-mode="nav">
+<header class="appbar">
+  <h1>TV Kumanda</h1>
+  <span class="chip-st" id="st"><i></i><span id="stt">bağlanıyor</span></span>
+  <button class="ibtn" id="pwBtn" aria-label="Güç"><svg class="i" viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg></button>
+  <button class="ibtn" id="setBtn" aria-label="Ayarlar"><svg class="i" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+</header>
+
+<main>
+  <section class="tab on" id="t-pad">
+    <div class="seg" id="modes">
+      <button data-mode="dpad">Tuş</button>
+      <button data-mode="nav" class="on">Kaydır</button>
+      <button data-mode="mouse">Fare</button>
+      <button data-mode="laser">Lazer</button>
+    </div>
+    <div class="stage">
+      <div id="pad">
+        <svg class="i" id="padIcon" viewBox="0 0 24 24"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>
+        <div class="big" id="padTitle"></div>
+        <div id="padHint"></div>
+        <div id="dot"></div>
+      </div>
+      <div id="dpadBox">
+        <button class="u sl" data-k="up" data-rep aria-label="Yukarı"><svg class="i" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg></button>
+        <button class="l sl" data-k="left" data-rep aria-label="Sol"><svg class="i" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg></button>
+        <button class="ok sl" data-k="enter">OK</button>
+        <button class="r sl" data-k="right" data-rep aria-label="Sağ"><svg class="i" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></button>
+        <button class="d sl" data-k="down" data-rep aria-label="Aşağı"><svg class="i" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+      </div>
+      <div class="vol">
+        <button class="sl" data-k="vol_up" data-rep aria-label="Ses artır"><svg class="i" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+        <button class="sl" data-k="mute" aria-label="Sessiz"><svg class="i" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+        <button class="sl" data-k="vol_down" data-rep aria-label="Ses azalt"><svg class="i" viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg></button>
+      </div>
+    </div>
+    <div class="row" id="clicks">
+      <button class="btn tonal sl" id="bl">Sol tık</button>
+      <button class="btn tonal sl" id="bm">Orta</button>
+      <button class="btn filled sl" id="bc">Merkezle</button>
+      <button class="btn tonal sl" id="br">Sağ tık</button>
+    </div>
+    <div class="bar">
+      <button class="sl" data-k="back" aria-label="Geri"><svg class="i" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+      <button class="sl" data-k="home" aria-label="Ana ekran"><svg class="i" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+      <button class="sl" data-k="menu" aria-label="Menü"><svg class="i" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+      <button class="sl" data-k="play_pause" aria-label="Oynat / duraklat"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+    </div>
+  </section>
+
+  <section class="tab" id="t-apps">
+    <div class="seg" id="appMode"><button data-am="open" class="on">Aç</button><button data-am="manage">Yönet</button></div>
+    <div id="apps"><div class="empty">Yükleniyor…</div></div>
+  </section>
+
+  <section class="tab" id="t-tv">
+    <div class="sec">Ana ekran (launcher)</div>
+    <div id="launchers" class="dlist"><div class="empty">Yükleniyor…</div></div>
+    <div class="sec">Hızlı ayarlar</div>
+    <div class="tiles" id="tiles"></div>
+    <div class="sec">Güç</div>
+    <div class="row"><button class="btn tonal sl" data-pw="sleep">Uyku</button><button class="btn tonal sl" data-pw="wake">Uyandır</button></div>
+    <div class="row"><button class="btn tonal sl" data-pw="reboot">Yeniden başlat</button><button class="btn tonal sl" data-pw="poweroff">Kapat</button></div>
+  </section>
+
+  <section class="tab" id="t-kb">
+    <div class="field">
+      <textarea id="txt" placeholder=" " autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+      <label for="txt">TV'deki odaklı alana yaz</label>
+    </div>
+    <div class="row">
+      <button class="btn filled sl" id="send">Gönder</button>
+      <button class="btn tonal sl" id="sendenter">Gönder + Enter</button>
+    </div>
+    <div class="segs">
+      <button class="sl" data-k="backspace" data-rep aria-label="Sil">⌫</button>
+      <button class="sl" data-k="enter">Enter</button>
+      <button class="sl" data-k="tab">Tab</button>
+      <button class="sl" data-k="esc">Esc</button>
+    </div>
+    <div class="hint">Türkçe harfler (ç ğ ı ö ş ü) ve emoji gönderilemez, atlanır.</div>
+  </section>
+</main>
+
+<nav id="nav">
+  <button data-t="pad" class="on"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M15 7.5V2H9v5.5l3 3 3-3zM7.5 9H2v6h5.5l3-3-3-3zM9 16.5V22h6v-5.5l-3-3-3 3zM16.5 9l-3 3 3 3H22V9h-5.5z"/></svg></span>Kumanda</button>
+  <button data-t="apps"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg></span>Uygulamalar</button>
+  <button data-t="tv"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></span>TV</button>
+  <button data-t="kb"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg></span>Klavye</button>
+</nav>
+
+<div id="snack" role="status"></div>
+
+<dialog id="pwD">
+  <h2>Güç</h2>
+  <div class="dlist">
+    <button class="btn tonal sl" data-pw="sleep">Uyku (ekranı kapat)</button>
+    <button class="btn tonal sl" data-pw="wake">Uyandır</button>
+    <button class="btn tonal sl" data-pw="reboot">Yeniden başlat</button>
+    <button class="btn tonal sl" data-pw="poweroff">Kapat</button>
+  </div>
+  <div class="act"><button class="btn text sl" id="pwClose">Kapat</button></div>
+</dialog>
+
+<dialog id="cfD">
+  <h2 id="cfT"></h2><p id="cfX"></p>
+  <div class="act"><button class="btn text sl" id="cfNo">İptal</button><button class="btn filled sl" id="cfOk">Tamam</button></div>
+</dialog>
+
+<dialog id="acD">
+  <h2 id="acT"></h2>
+  <div class="dlist" id="acL"></div>
+  <div class="act"><button class="btn text sl" id="acClose">Kapat</button></div>
+</dialog>
+
+<dialog id="setD">
+  <h2>Ayarlar</h2>
+  <div class="set"><span>Touchpad hızı <b id="v_pad"></b></span><input type="range" id="s_pad" min="1" max="30"></div>
+  <div class="set"><span>Lazer genişliği (derece) <b id="v_fov"></b></span><input type="range" id="s_fov" min="15" max="90"></div>
+  <div class="set"><span>Lazer düzgünleştirme <b id="v_smooth"></b></span><input type="range" id="s_smooth" min="0" max="90"></div>
+  <div class="set"><span>Gezinti: tuş başına kaydırma <b id="v_step"></b></span><input type="range" id="s_step" min="24" max="120"></div>
+  <div class="chips">
+    <label class="fchip"><input type="checkbox" id="c_invx">Lazer X ters</label>
+    <label class="fchip"><input type="checkbox" id="c_invy">Lazer Y ters</label>
+    <label class="fchip"><input type="checkbox" id="c_clutch">Parmakla etkinleştir</label>
+    <label class="fchip"><input type="checkbox" id="c_back">Arka kamera yönü</label>
+    <label class="fchip"><input type="checkbox" id="c_nat">Doğal kaydırma</label>
+    <label class="fchip"><input type="checkbox" id="c_vib">Titreşim</label>
+  </div>
+  <div class="act"><button class="btn text sl" id="setOk">Tamam</button></div>
+</dialog>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+/* ---------- ayarlar ---------- */
+const DEF={pad:10,fov:40,smooth:40,step:56,invx:false,invy:false,nat:false,vib:true,clutch:false,back:false,mode:'nav'};
+let S={...DEF}; try{S={...DEF,...JSON.parse(localStorage.getItem('tvr')||'{}')}}catch(e){}
+const save=()=>{try{localStorage.setItem('tvr',JSON.stringify(S))}catch(e){}};
+
+/* ---------- bağlantı ---------- */
+const st=$('#st'), stt=$('#stt'), snack=$('#snack'); let snackT=null;
+function toast(t){snack.textContent=t;snack.classList.add('show');clearTimeout(snackT);snackT=setTimeout(()=>snack.classList.remove('show'),2200)}
+function ui(ok,t){st.className='chip-st '+(ok?'ok':'bad');stt.textContent=ok?(wsOk?'bağlı':'bağlı (yavaş)'):(t||'bağlantı yok')}
+let ws=null, wsOk=false, wsTry=false;
+function connect(){
+  if(wsTry)return; wsTry=true;
+  try{ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws')}catch(e){wsTry=false;setTimeout(connect,2000);return}
+  ws.onopen=()=>{wsOk=true;ui(true)};
+  ws.onmessage=m=>{try{const d=JSON.parse(m.data);if(d.skipped)toast(d.skipped+' karakter atlandı')}catch(e){}};
+  const lost=()=>{if(!wsTry)return;wsOk=false;wsTry=false;ui(false);setTimeout(connect,1500)};
+  ws.onclose=lost;ws.onerror=lost;
+}
+async function post(o){
+  try{const r=await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o),keepalive:true});ui(r.ok);return r.json()}
+  catch(e){ui(false);return null}
+}
+let inflight=false,pend=null;
+function send(o){
+  if(wsOk){try{ws.send(JSON.stringify(o));return}catch(e){}}
+  if(o.t==='move'){ // ws yoksa tek istek ucta: hareketleri birlestir
+    if(inflight){if(pend){pend.dx+=o.dx;pend.dy+=o.dy;pend.w+=o.w}else pend={...o};return}
+    inflight=true;return post(o).finally(()=>{inflight=false;if(pend){const p=pend;pend=null;send(p)}});
+  }
+  return post(o);
+}
+connect(); setInterval(()=>send({t:'ping'}),8000);
+const buzz=n=>{if(S.vib&&navigator.vibrate)navigator.vibrate(n)};
+
+/* ---------- sekmeler ---------- */
+$$('#nav button').forEach(b=>b.onclick=()=>{
+  $$('#nav button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.id==='t-'+b.dataset.t));
+  if(b.dataset.t==='apps')loadApps();
+  if(b.dataset.t==='tv')loadTv();
+});
+
+/* ---------- tuş düğmeleri (basılı tutunca tekrar) ---------- */
+function key(k){send({t:'key',k});buzz(8)}
+$$('[data-k]').forEach(b=>{
+  let tm=null,iv=null; const k=b.dataset.k;
+  const stop=()=>{clearTimeout(tm);clearInterval(iv);b.classList.remove('hold')};
+  b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('hold');key(k);
+    if(b.hasAttribute('data-rep'))tm=setTimeout(()=>{iv=setInterval(()=>key(k),110)},380)});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,stop));
+});
+
+/* ---------- hareket kuyruğu ---------- */
+let qx=0,qy=0,qw=0;
+function flush(){
+  const dx=Math.round(qx),dy=Math.round(qy),w=Math.round(qw);
+  if(!dx&&!dy&&!w)return;
+  qx-=dx;qy-=dy;qw-=w;send({t:'move',dx,dy,w});
+}
+setInterval(flush,16);
+
+/* ---------- modlar ---------- */
+const MODES={
+  dpad:{title:'Kumanda',hint:''},
+  nav:{title:'Kaydır',hint:'Kaydır: yön tuşları · Dokun: OK<br>İki parmak dokun: Geri · Basılı tut: Menü'},
+  mouse:{title:'Fare',hint:'Kaydır: imleç · Dokun: sol tık · İki parmak dokun: sağ tık<br>İki parmak kaydır: sayfa · Dokun-sürükle: taşı'},
+  laser:{title:'Lazer',hint:'Telefonun üst kenarını TV\'ye doğrult, imleç oraya gider<br>Dokun: tık · İki parmak: sağ tık · Basılı tut: sürükle<br>Kayarsa "Merkezle"'}
+};
+function setMode(m){
+  if(!MODES[m])m='nav';
+  S.mode=m;save();document.body.dataset.mode=m;
+  $$('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  $('#padTitle').textContent=MODES[m].title;$('#padHint').innerHTML=MODES[m].hint;
+  laserOn(m==='laser');
+}
+$$('#modes button').forEach(b=>b.onclick=()=>{setMode(b.dataset.mode);buzz(10)});
+
+/* ---------- touchpad ---------- */
+const pad=$('#pad'), dot=$('#dot');
+let pts=new Map(),t0=0,moved=0,maxp=0,accX=0,accY=0,lastTapEnd=0,dragging=false,longT=null,longFired=false,hist=[],held=false;
+function showDot(x,y){const r=pad.getBoundingClientRect();dot.style.left=(x-r.left)+'px';dot.style.top=(y-r.top)+'px';dot.style.opacity=.5}
+function emitNav(){
+  const step=+S.step;
+  while(Math.abs(accX)>=step){key(accX>0?'right':'left');accX-=Math.sign(accX)*step}
+  while(Math.abs(accY)>=step){key(accY>0?'down':'up');accY-=Math.sign(accY)*step}
+}
+pad.addEventListener('pointerdown',e=>{
+  pad.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  showDot(e.clientX,e.clientY);
+  if(pts.size===1){
+    t0=performance.now();moved=0;maxp=1;accX=accY=0;hist=[];longFired=false;
+    clearTimeout(longT);
+    held=true; if(S.mode==='laser')pad.classList.add('aim');
+    longT=setTimeout(()=>{
+      if(pts.size!==1||moved>=10||dragging)return;
+      longFired=true;buzz(20);
+      if(S.mode==='nav')key('menu');
+      else if(S.mode==='mouse')send({t:'click',b:2});
+      else if(S.mode==='laser'){dragging=true;send({t:'btn',b:1,down:true})}
+    },S.mode==='laser'?380:550);
+    if(S.mode==='mouse'&&t0-lastTapEnd<280){dragging=true;send({t:'btn',b:1,down:true});buzz(12)}
+  }else maxp=Math.max(maxp,pts.size);
+});
+pad.addEventListener('pointermove',e=>{
+  const p=pts.get(e.pointerId); if(!p)return;
+  const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX;p.y=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+  showDot(e.clientX,e.clientY);
+  if(moved>10&&!dragging)clearTimeout(longT);
+  const now=performance.now(); hist.push([now,e.clientX,e.clientY]); if(hist.length>6)hist.shift();
+  if(S.mode==='nav'){
+    if(pts.size===1){accX+=dx;accY+=dy;emitNav()}
+  }else if(S.mode==='mouse'){
+    if(pts.size>=2){qw+=(S.nat?1:-1)*dy/12}
+    else{const sp=Math.hypot(dx,dy),gn=(+S.pad/8)*(1+Math.min(sp,24)*0.07);qx+=dx*gn;qy+=dy*gn}
+  }
+});
+function padUp(e){
+  if(!pts.has(e.pointerId))return;
+  clearTimeout(longT);
+  const now=performance.now(), dt=now-t0;
+  const single=pts.size===1;
+  if(single&&S.mode==='nav'&&maxp===1&&moved>=10&&hist.length>2){ // fırlatma: hızlıysa birkaç tuş daha
+    const a=hist[0],b=hist[hist.length-1],T=Math.max(1,b[0]-a[0]),vx=(b[1]-a[1])/T,vy=(b[2]-a[2])/T;
+    const v=Math.hypot(vx,vy); if(v>1.1){const n=Math.min(4,Math.round(v*1.6));
+      const horiz=Math.abs(vx)>Math.abs(vy); for(let i=0;i<n;i++)setTimeout(()=>key(horiz?(vx>0?'right':'left'):(vy>0?'down':'up')),i*70)}
+  }
+  if(single&&maxp===1&&dt<260&&moved<10&&!longFired){
+    if(S.mode==='nav')key('enter');
+    else if(S.mode==='mouse'){ if(!dragging){send({t:'click',b:1});lastTapEnd=now} }
+    else if(S.mode==='laser'){send({t:'click',b:1});buzz(10)}
+  }else if(single&&maxp===2&&dt<260&&moved<14){
+    if(S.mode==='nav')key('back');else send({t:'click',b:2});
+  }
+  if(dragging&&single){send({t:'btn',b:1,down:false});dragging=false}
+  pts.delete(e.pointerId); if(!pts.size){maxp=0;held=false;pad.classList.remove('aim');dot.style.opacity=0}
+}
+pad.addEventListener('pointerup',padUp);pad.addEventListener('pointercancel',padUp);
+
+/* ---------- fare düğmeleri ---------- */
+function mb(el,b){
+  el.addEventListener('pointerdown',e=>{e.preventDefault();el.classList.add('hold');send({t:'btn',b,down:true});buzz(8)});
+  const up=()=>{if(el.classList.contains('hold')){el.classList.remove('hold');send({t:'btn',b,down:false})}};
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,up));
+}
+mb($('#bl'),1);mb($('#br'),2);mb($('#bm'),4);
+$('#bc').onclick=()=>recenter();
+
+/* ---------- lazer: telefon gerçek işaretçi ---------- */
+const TV={w:1920,h:1080};
+fetch('/info').then(r=>r.json()).then(j=>{if(j&&j.w){TV.w=j.w;TV.h=j.h}}).catch(()=>{});
+/* Android fare ivmesi hızlı akışta öngörülemez. Lazer imleci ivmenin başlamadığı hız aralığında tutar (TV'de ölçüldü):
+   60 Hz'de rapor başına en fazla 11 sayı, her sayı tam 2.02 piksel. Böylece konum tahmini sapmaz. En yüksek hız ~1330 px/sn. */
+const G0=2.02, CAP=11;
+function countsFor(px){return Math.min(CAP,Math.floor(px/G0))}
+const clampN=(v,a,b)=>Math.max(a,Math.min(b,v));
+const needsPerm=typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function';
+let permOk=!needsPerm, laserActive=false, cal=null, sm={x:0,y:0}, tgt={x:0,y:0}, est={x:0,y:0}, homingUntil=0, ori={a:0,b:0,g:0,have:false};
+async function gyroPerm(){
+  if(permOk)return true;
+  try{permOk=(await DeviceOrientationEvent.requestPermission())==='granted'}catch(e){permOk=false}
+  if(!permOk)toast('Gyro izni verilmedi');return permOk;
+}
+function aimAngles(){ // telefonun "ileri" ekseni dünya koordinatında: yön (yaw) ve eğim (pitch)
+  const r=Math.PI/180,a=ori.a*r,b=ori.b*r,g=ori.g*r;
+  const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cg=Math.cos(g),sg=Math.sin(g);
+  const f=S.back?[-(ca*sg+sa*sb*cg),-(sa*sg-ca*sb*cg),-(cb*cg)]:[-sa*cb,ca*cb,sb]; // arka kamera / üst kenar
+  return {yaw:Math.atan2(f[0],f[1])/r, pitch:Math.asin(clampN(f[2],-1,1))/r};
+}
+function recenter(){
+  if(!ori.have){toast('Gyro verisi bekleniyor');return}
+  const a=aimAngles(); cal={yaw:a.yaw,pitch:a.pitch}; sm={x:TV.w/2,y:TV.h/2};
+  for(let i=0;i<22;i++)setTimeout(()=>send({t:'move',dx:-127,dy:-127,w:0}),i*25); // imleci sol-üst köşeye çakıp konumu sıfırla
+  est={x:0,y:0}; homingUntil=performance.now()+22*25+80; buzz(25);
+}
+function laserOn(on){laserActive=on; if(on){gyroPerm().then(ok=>{if(ok)recenter()})}else cal=null}
+function stepTo(tx,ty){
+  const dx=tx-est.x, dy=ty-est.y;
+  const cx=countsFor(Math.abs(dx))*Math.sign(dx), cy=countsFor(Math.abs(dy))*Math.sign(dy);
+  if(!cx&&!cy)return;
+  est.x=clampN(est.x+cx*G0,0,TV.w-1); est.y=clampN(est.y+cy*G0,0,TV.h-1);
+  send({t:'move',dx:cx,dy:cy,w:0});
+}
+window.addEventListener('deviceorientation',e=>{
+  if(e.alpha==null||e.beta==null)return;
+  ori={a:e.alpha,b:e.beta,g:e.gamma||0,have:true};
+  if(!laserActive||!cal)return;
+  const a=aimAngles(); let dyaw=a.yaw-cal.yaw; dyaw=((dyaw+540)%360)-180; const dp=a.pitch-cal.pitch;
+  const ppd=TV.w/(+S.fov||40);                                  // piksel/derece
+  const x=TV.w/2+(S.invx?-1:1)*dyaw*ppd, y=TV.h/2-(S.invy?-1:1)*dp*ppd;
+  const k=1-(+S.smooth||0)/100*0.9;                              // düzgünleştirme
+  sm.x+=(x-sm.x)*k; sm.y+=(y-sm.y)*k;
+  tgt.x=clampN(sm.x,-40,TV.w+40); tgt.y=clampN(sm.y,-40,TV.h+40);
+});
+setInterval(()=>{ if(laserActive&&cal&&performance.now()>=homingUntil&&(!S.clutch||held))stepTo(tgt.x,tgt.y) },16);
+
+/* ---------- uygulamalar ---------- */
+async function loadApps(){
+  const box=$('#apps');
+  try{
+    const r=await fetch('/apps'); const a=await r.json();
+    if(!Array.isArray(a)){box.innerHTML='<div class="empty">Liste alınamadı</div>';return}
+    box.innerHTML='';
+    a.forEach(x=>{const b=document.createElement('button');b.className='app sl';
+      const i=document.createElement('b');i.textContent=(x.name[0]||'?').toUpperCase();
+      b.append(i,document.createTextNode(x.name));
+      b.onclick=()=>appClick(x);box.appendChild(b)});
+  }catch(e){box.innerHTML='<div class="empty">Liste alınamadı</div>'}
+}
+
+/* ---------- klavye ---------- */
+function sendTxt(enter){
+  const v=$('#txt').value; if(!v&&!enter)return;
+  if(v)send({t:'text',s:v}); if(enter)setTimeout(()=>send({t:'key',k:'enter'}),120);
+  $('#txt').value='';
+}
+$('#send').onclick=()=>sendTxt(false);$('#sendenter').onclick=()=>sendTxt(true);
+
+/* ---------- ayar penceresi ---------- */
+const paint=(el)=>el.style.setProperty('--v',((el.value-el.min)/(el.max-el.min)*100)+'%');
+function bindRange(id,key,vid){const el=$(id);el.value=S[key];paint(el);$(vid).textContent=S[key];
+  el.addEventListener('input',()=>{S[key]=+el.value;$(vid).textContent=el.value;paint(el);save()})}
+bindRange('#s_pad','pad','#v_pad');bindRange('#s_fov','fov','#v_fov');bindRange('#s_smooth','smooth','#v_smooth');bindRange('#s_step','step','#v_step');
+[['#c_invx','invx'],['#c_invy','invy'],['#c_nat','nat'],['#c_vib','vib'],['#c_clutch','clutch'],['#c_back','back']].forEach(([id,k])=>{
+  const el=$(id);el.checked=!!S[k];el.addEventListener('change',()=>{S[k]=el.checked;save()})});
+$('#setBtn').onclick=()=>$('#setD').showModal();$('#setOk').onclick=()=>$('#setD').close();
+
+/* ---------- onay penceresi ---------- */
+function confirmD(title,text,ok,danger){
+  return new Promise(res=>{
+    const d=$('#cfD'); $('#cfT').textContent=title; $('#cfX').textContent=text;
+    const b=$('#cfOk'); b.textContent=ok||'Tamam'; b.className='btn '+(danger?'danger':'filled')+' sl';
+    let done=false; const fin=v=>{if(done)return;done=true;if(d.open)d.close();res(v)};
+    b.onclick=()=>fin(true); $('#cfNo').onclick=()=>fin(false); d.addEventListener('close',()=>fin(false),{once:true});
+    d.showModal();
+  });
+}
+
+/* ---------- güç ---------- */
+const PW={sleep:'Uyku komutu gönderildi',wake:'Uyandırılıyor',reboot:'Yeniden başlatılıyor',poweroff:'Kapatılıyor'};
+$$('[data-pw]').forEach(b=>b.onclick=async()=>{
+  const a=b.dataset.pw; if($('#pwD').open)$('#pwD').close();
+  if(a==='reboot'&&!await confirmD('Yeniden başlatılsın mı?','TV yaklaşık 1.5 dakika kapalı kalır, kumanda da bu sürede çalışmaz.','Yeniden başlat',true))return;
+  if(a==='poweroff'&&!await confirmD('Kapatılsın mı?','Kapatınca bu kumandayla geri açamazsın, fiziksel düğme gerekir.','Kapat',true))return;
+  send({t:'power',a}); toast(PW[a]); buzz(15);
+});
+$('#pwBtn').onclick=()=>$('#pwD').showModal(); $('#pwClose').onclick=()=>$('#pwD').close();
+
+/* ---------- TV sekmesi: launcher + hızlı ayarlar ---------- */
+const GEAR='<svg class="i" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>';
+const TILES=[['wifi','Wi-Fi'],['network','Ağ'],['bluetooth','Bluetooth'],['display','Ekran'],['sound','Ses'],['apps','Uygulamalar'],['storage','Depolama'],['access','Erişilebilirlik'],['defaults','Varsayılanlar'],['date','Tarih / saat'],['input','Klavye'],['dev','Geliştirici'],['all','Tüm ayarlar']];
+(function(){const box=$('#tiles');TILES.forEach(([k,n])=>{const b=document.createElement('button');b.className='tile sl';b.innerHTML=GEAR+'<span></span>';b.lastChild.textContent=n;
+  b.onclick=()=>{send({t:'settings',k});toast(n+' ayarları TV\'de açılıyor');buzz(10)};box.appendChild(b)})})();
+async function loadTv(){
+  const box=$('#launchers');
+  try{
+    const r=await fetch('/launchers'); const d=await r.json(); box.innerHTML='';
+    if(!d.items||!d.items.length){box.innerHTML='<div class="empty">Launcher bulunamadı</div>';return}
+    d.items.forEach(x=>{const b=document.createElement('button');b.className='lrow sl'+(x.current?' cur':'');
+      const n=document.createElement('span');n.textContent=x.name;const s=document.createElement('small');s.textContent=x.current?'şu an':'';
+      b.append(n,s);
+      b.onclick=async()=>{ if(x.current){toast(x.name+' zaten varsayılan');return}
+        if(!await confirmD(x.name+' varsayılan olsun mu?','Home tuşu ve açılış bu ana ekrana gider. İstediğin zaman buradan geri değiştirebilirsin.','Varsayılan yap'))return;
+        const j=await post({t:'home',c:x.c}); toast(j&&j.ok?x.name+' varsayılan yapıldı':'Değiştirilemedi'); loadTv()};
+      box.appendChild(b)});
+  }catch(e){box.innerHTML='<div class="empty">Liste alınamadı</div>'}
+}
+
+/* ---------- uygulama yönetimi ---------- */
+let appMode='open';
+$$('#appMode button').forEach(b=>b.onclick=()=>{appMode=b.dataset.am;$$('#appMode button').forEach(x=>x.classList.toggle('on',x===b));
+  toast(appMode==='manage'?'Yönet: bir uygulamaya dokun':'Aç: dokununca uygulama açılır')});
+const PROT=['com.termux','com.termux.boot'];
+function appClick(x){
+  if(appMode!=='manage'){send({t:'app',pkg:x.pkg});toast(x.name+' açılıyor');buzz(12);return}
+  $('#acT').textContent=x.name; const L=$('#acL'); L.innerHTML='';
+  const prot=PROT.includes(x.pkg);
+  [['open','Aç',false],['stop','Durdur',true],['info','Uygulama bilgisi (TV)',false],['clear','Verileri temizle',true],['uninstall','Kaldır',true]].forEach(([a,n,risky])=>{
+    const b=document.createElement('button');b.className='btn '+(a==='uninstall'?'danger':'tonal')+' sl';b.textContent=n;
+    if(prot&&risky){b.disabled=true;b.style.opacity=.4}
+    b.onclick=async()=>{ $('#acD').close();
+      if(a==='uninstall'&&!await confirmD(x.name+' kaldırılsın mı?','Uygulama ve verileri silinir. Geri alınamaz.','Kaldır',true))return;
+      if(a==='clear'&&!await confirmD(x.name+' verileri silinsin mi?','Giriş bilgileri ve ayarlar sıfırlanır.','Temizle',true))return;
+      const j=await post({t:'appact',a,pkg:x.pkg});
+      toast(j&&j.ok?(a==='uninstall'?x.name+' kaldırıldı':n+': tamam'):(j&&j.msg==='korumali'?'Bu uygulama kumanda için gerekli':'İşlem başarısız'));
+      if(a==='uninstall'&&j&&j.ok)loadApps()};
+    L.appendChild(b)});
+  if(prot){const p=document.createElement('p');p.textContent='Bu uygulama kumandanın kendisini çalıştırıyor, kaldırılamaz.';L.appendChild(p)}
+  $('#acD').showModal();
+}
+$('#acClose').onclick=()=>$('#acD').close();
+
+setMode(S.mode);
+</script>
+</body>
+</html>

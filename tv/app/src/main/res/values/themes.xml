@@ -1,0 +1,13 @@
+<resources>
+    <style name="Theme.TvKumanda" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#9ECAFF</item>
+        <item name="colorOnPrimary">#003258</item>
+        <item name="colorPrimaryContainer">#00497D</item>
+        <item name="colorOnPrimaryContainer">#D1E4FF</item>
+        <item name="colorSurface">#101418</item>
+        <item name="colorOnSurface">#E0E2E8</item>
+        <item name="colorSurfaceContainerHigh">#272A2F</item>
+        <item name="android:windowBackground">#101418</item>
+        <item name="android:colorBackground">#101418</item>
+    </style>
+</resources>

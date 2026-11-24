@@ -1,0 +1,12 @@
+.gradle/
+.idea/
+local.properties
+build/
+app/build/
+*.apk
+*.iml
+.DS_Store
+emulator_*.png
+phone_screen.png
+tv_screen.png
+icon_preview.png
