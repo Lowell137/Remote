@@ -12,7 +12,7 @@ Telefondaki **Remote** uygulamasına bağlanan Android TV sunucusu. PC veya Term
 - Uygulama açılışta sunucuyu başlatır, ekranda kendi LAN adresini gösterir (örn. `http://192.168.1.50:8080`). Sunucu tüm arayüzlere bind olur; sabit IP yok.
 
 ## Telefon tarafı
-Aynı ağdaki telefon uygulaması TV'yi otomatik tarar; gerekirse Ayarlar → TV → TV'yi ara ile bulur. Telefon deposu: `Lowell137/Remote-Phone`.
+Aynı ağdaki telefon uygulaması TV'yi otomatik tarar; gerekirse Ayarlar → TV → TV'yi ara ile bulur. Tek depo: `Lowell137/Remote` (klasörler `tv/` + `phone/`).
 
 ## Tek komutla dağıtım
 Telefon projesindeki `deploy.ps1` iki APK'yı da derleyip TV + telefon + isteğe bağlı emülatöre kurar:
