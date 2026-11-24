@@ -6,3 +6,4 @@ app/build/
 *.apk
 *.iml
 .DS_Store
+tv_*_check.png

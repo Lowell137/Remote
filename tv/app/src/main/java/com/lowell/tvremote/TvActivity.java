@@ -1,5 +1,7 @@
 package com.lowell.tvremote;
 
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,26 +15,46 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 
-/** TV ekrani: sunucu durumu, adres, log. */
+import java.util.Locale;
+
+/** TV ekrani: sunucu durumu, adres, log. TR / EN. */
 public class TvActivity extends AppCompatActivity {
     private final Handler h = new Handler(Looper.getMainLooper());
     private TextView tServer, tAdb, tHid, tPhones, tUrl, tHint, tLog;
     private ScrollView scroll;
     private String lastLog = "";
+    private boolean en;
 
     private final Runnable tick = new Runnable() {
         @Override public void run() { refresh(); h.postDelayed(this, 1000); }
     };
 
+    private void applyLocale() {
+        SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+        en = "en".equals(p.getString("lang", "tr"));
+        Locale loc = new Locale(en ? "en" : "tr");
+        Locale.setDefault(loc);
+        Configuration cfg = new Configuration(getResources().getConfiguration());
+        cfg.setLocale(loc);
+        getResources().updateConfiguration(cfg, getResources().getDisplayMetrics());
+    }
+
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        applyLocale();
         setContentView(R.layout.activity_tv);
         tServer = findViewById(R.id.t_server); tAdb = findViewById(R.id.t_adb); tHid = findViewById(R.id.t_hid);
         tPhones = findViewById(R.id.t_phones); tUrl = findViewById(R.id.t_url); tHint = findViewById(R.id.t_hint);
         tLog = findViewById(R.id.t_log); scroll = findViewById(R.id.scroll);
         MaterialButton restart = findViewById(R.id.b_restart), clear = findViewById(R.id.b_clear);
+        MaterialButton lang = findViewById(R.id.b_lang);
         restart.setOnClickListener(v -> { Backend.I.restart(this); RemoteService.startIt(this); });
         clear.setOnClickListener(v -> { Logx.clear(); lastLog = ""; refresh(); });
+        lang.setText(en ? R.string.lang_tr : R.string.lang_en);
+        lang.setOnClickListener(v -> {
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putString("lang", en ? "tr" : "en").apply();
+            recreate();
+        });
         restart.requestFocus();
         RemoteService.startIt(this);
     }
@@ -49,14 +71,17 @@ public class TvActivity extends AppCompatActivity {
 
     private void refresh() {
         Backend be = Backend.I;
-        dot(tServer, be.serverUp, false, "Sunucu", be.serverUp ? "calisiyor (port " + Backend.PORT + ")" : be.serverMsg);
+        dot(tServer, be.serverUp, false, getString(R.string.label_server),
+                be.serverUp ? getString(R.string.status_running, Backend.PORT) : be.serverMsg);
         boolean awaiting = !be.adbConnected() && be.adbState().contains("onayla");
-        dot(tAdb, be.adbConnected(), awaiting, "ADB", be.adbConnected() ? "bagli" : be.adbState());
-        dot(tHid, be.hidReady(), false, "Sanal fare/klavye", be.hidReady() ? "hazir" : "bekliyor");
-        dot(tPhones, be.clients() > 0, be.clients() == 0, "Telefon", be.clients() + " bagli, " + be.requests() + " istek");
+        dot(tAdb, be.adbConnected(), awaiting, getString(R.string.label_adb),
+                be.adbConnected() ? getString(R.string.status_connected) : be.adbState());
+        dot(tHid, be.hidReady(), false, getString(R.string.label_hid),
+                be.hidReady() ? getString(R.string.status_ready) : getString(R.string.status_waiting));
+        dot(tPhones, be.clients() > 0, be.clients() == 0, getString(R.string.label_phone),
+                getString(R.string.phones, be.clients(), be.requests()));
         tUrl.setText("http://" + Backend.lanIp() + ":" + Backend.PORT);
-        tHint.setText(awaiting ? "Ekrandaki 'USB hata ayiklamasina izin verilsin mi?' penceresinde \"Her zaman izin ver\"i sec."
-                : "Telefondan bu adresi ac ya da telefon uygulamasini kullan.");
+        tHint.setText(awaiting ? getString(R.string.hint_awaiting) : getString(R.string.hint_normal));
         String log = Logx.tail(60);
         if (!log.equals(lastLog)) { lastLog = log; tLog.setText(log); scroll.post(() -> scroll.fullScroll(ScrollView.FOCUS_DOWN)); }
     }

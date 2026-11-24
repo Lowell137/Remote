@@ -1,1 +1,19 @@
-<resources><string name="app_name">Remote</string></resources>
+<resources>
+    <string name="app_name">Remote</string>
+    <string name="subtitle">Sunucu ve sanal fare/klavye</string>
+    <string name="restart">Yeniden baslat</string>
+    <string name="clear_log">Logu temizle</string>
+    <string name="lang_en">English</string>
+    <string name="lang_tr">Türkçe</string>
+    <string name="label_server">Sunucu</string>
+    <string name="label_adb">ADB</string>
+    <string name="label_hid">Sanal fare/klavye</string>
+    <string name="label_phone">Telefon</string>
+    <string name="status_running">calisiyor (port %1$d)</string>
+    <string name="status_connected">bagli</string>
+    <string name="status_ready">hazir</string>
+    <string name="status_waiting">bekliyor</string>
+    <string name="phones">%1$d bagli, %2$d istek</string>
+    <string name="hint_awaiting">Ekrandaki \"USB hata ayiklamasina izin verilsin mi?\" penceresinde \"Her zaman izin ver\"i sec.</string>
+    <string name="hint_normal">Telefondan bu adresi ac ya da telefon uygulamasini kullan.</string>
+</resources>

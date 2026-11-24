@@ -1,1 +1,19 @@
-<resources><string name="app_name">Remote</string></resources>
+<resources>
+    <string name="app_name">Remote</string>
+    <string name="subtitle">Server and virtual mouse/keyboard</string>
+    <string name="restart">Restart</string>
+    <string name="clear_log">Clear log</string>
+    <string name="lang_en">English</string>
+    <string name="lang_tr">Türkçe</string>
+    <string name="label_server">Server</string>
+    <string name="label_adb">ADB</string>
+    <string name="label_hid">Virtual mouse/keyboard</string>
+    <string name="label_phone">Phone</string>
+    <string name="status_running">running (port %1$d)</string>
+    <string name="status_connected">connected</string>
+    <string name="status_ready">ready</string>
+    <string name="status_waiting">waiting</string>
+    <string name="phones">%1$d connected, %2$d requests</string>
+    <string name="hint_awaiting">On the \"Allow USB debugging?\" dialog, select \"Always allow\".</string>
+    <string name="hint_normal">Open this address on the phone or use the phone app.</string>
+</resources>
